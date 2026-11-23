@@ -1,4 +1,4 @@
-tmdb_id,movie_status,credits_status,movie_error,credits_error,extracted_at_utc
+﻿tmdb_id,movie_status,credits_status,movie_error,credits_error,extracted_at_utc
 155,success,success,,,2026-11-23T07:37:38.638745+00:00
 165,success,success,,,2026-11-23T07:37:39.162486+00:00
 242,success,success,,,2026-11-23T07:37:39.585781+00:00
@@ -116,3 +116,4 @@ tmdb_id,movie_status,credits_status,movie_error,credits_error,extracted_at_utc
 620,success,success,,,2026-11-23T07:38:27.557865+00:00
 296,success,success,,,2026-11-23T07:38:28.028370+00:00
 8078,success,success,,,2026-11-23T07:38:28.477010+00:00
+
