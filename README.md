@@ -6,13 +6,15 @@
 ![Pandas](https://img.shields.io/badge/Data%20Analysis-Pandas-150458)
 ![Status](https://img.shields.io/badge/Project-Implemented-success)
 
+---
+
 ## 1. Project Overview
 
 StreamVault is evaluating how to allocate its content acquisition budget between franchise collections and standalone films.
 
-This project develops a repeatable Python ETL and analytics pipeline that retrieves movie information from [The Movie Database (TMDb)](https://www.themoviedb.org/), preserves the retrieved source data, transforms it into structured datasets, performs data-quality checks and evaluates historical box-office performance.
+This project develops a repeatable Python ETL and analytics pipeline that retrieves movie information from [The Movie Database (TMDb)](https://www.themoviedb.org/), preserves retrieved source data, transforms it into structured datasets, performs data-quality checks and evaluates historical box-office performance.
 
-The analysis compares:
+The analysis compares two categories:
 
 - **Franchise films:** Movies associated with a TMDb collection.
 - **Standalone films:** Movies without an associated TMDb collection in the retrieved data.
@@ -77,12 +79,12 @@ The project aims to:
 ## 5. Repository Structure
 
 ```text
-StreamVault_Licensing_Analysis/
+StreamVault-Licensing-Analysis/
 │
 ├── data/
 │   ├── id_list.csv
 │   ├── extraction_log.csv
-│   └── raw/
+│   └── raw/                       # Generated locally
 │       ├── movie_*.json
 │       └── credits_*.json
 │
@@ -110,8 +112,7 @@ StreamVault_Licensing_Analysis/
 │   ├── transform.py
 │   └── validate.py
 │
-├── out/
-│   └── Generated CSV analysis outputs
+├── out/                           # Generated locally
 │
 ├── .env.example
 ├── .gitignore
@@ -121,7 +122,7 @@ StreamVault_Licensing_Analysis/
 └── README.md
 ```
 
-### Main components
+### Main Components
 
 | Component | Responsibility |
 |---|---|
@@ -134,6 +135,8 @@ StreamVault_Licensing_Analysis/
 | `test_tmdb.py` | Separate live API consistency check |
 | `requirements.txt` | Python dependencies and pinned versions |
 | `.env.example` | Template showing the required environment variable |
+
+**Note:** The `data/raw/` and `out/` directories are generated locally and excluded from version control. They are populated through project execution.
 
 ## 6. Installation and Environment Setup
 
@@ -149,27 +152,27 @@ Before starting, ensure you have:
 - Internet access for TMDb API requests.
 - A valid TMDb API key.
 
-### 6.2 Obtain the project
+### 6.2 Obtain the Project
 
-Clone the repository:
+Clone the GitHub repository:
 
 ```powershell
-git clone <YOUR-GITHUB-REPOSITORY-URL>
+git clone https://github.com/michael-boakye/StreamVault-Licensing-Analysis.git
 ```
 
 Move into the project directory:
 
 ```powershell
-cd StreamVault_Licensing_Analysis
+cd StreamVault-Licensing-Analysis
 ```
 
 Alternatively, download the repository as a ZIP file, extract it and open the project folder in VS Code.
 
 **Important:** Run all commands from the project root directory, where `run_pipeline.py` and `requirements.txt` are located.
 
-### 6.3 Create a virtual environment
+### 6.3 Create a Virtual Environment
 
-A virtual environment keeps this project's Python dependencies separate from other Python projects on your computer.
+A virtual environment keeps this project's Python dependencies separate from other Python projects.
 
 Run:
 
@@ -177,7 +180,7 @@ Run:
 python -m venv .venv
 ```
 
-### 6.4 Activate the virtual environment
+### 6.4 Activate the Virtual Environment
 
 In the VS Code PowerShell terminal:
 
@@ -185,7 +188,7 @@ In the VS Code PowerShell terminal:
 .\.venv\Scripts\Activate.ps1
 ```
 
-If PowerShell blocks script execution, you can temporarily allow activation scripts in the current terminal session:
+If PowerShell blocks script execution, temporarily allow activation scripts in the current terminal session:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
@@ -199,7 +202,7 @@ Then activate the environment again:
 
 When activation succeeds, your terminal should display `(.venv)` at the beginning of the command prompt.
 
-### 6.5 Upgrade pip and install dependencies
+### 6.5 Upgrade pip and Install Dependencies
 
 Upgrade pip:
 
@@ -215,7 +218,7 @@ python -m pip install -r requirements.txt
 
 The requirements file contains the pinned package versions used by the project.
 
-### 6.6 Verify the installation
+### 6.6 Verify the Installation
 
 Run:
 
@@ -231,11 +234,11 @@ If no broken requirements are reported, the environment passes this dependency c
 
 The pipeline retrieves movie information from TMDb and therefore requires an API key.
 
-### Step 1: Obtain an API key
+### Step 1: Obtain an API Key
 
 Create a TMDb account and obtain an API key through the TMDb developer settings.
 
-### Step 2: Create the environment file
+### Step 2: Create the Environment File
 
 In the project root, create a file named:
 
@@ -245,7 +248,7 @@ In the project root, create a file named:
 
 Use `.env.example` as the template.
 
-### Step 3: Add your API key
+### Step 3: Add Your API Key
 
 The `.env` file should contain:
 
@@ -255,7 +258,7 @@ TMDB_API_KEY=your_tmdb_api_key_here
 
 Replace the placeholder with your own valid API key.
 
-### Step 4: Protect your credentials
+### Step 4: Protect Your Credentials
 
 Never commit `.env` to GitHub or share your actual API key.
 
@@ -271,7 +274,7 @@ python run_pipeline.py
 
 This is the main command for executing the project.
 
-### 8.1 What happens when the pipeline runs?
+### 8.1 What Happens When the Pipeline Runs?
 
 The pipeline coordinates the following stages:
 
@@ -290,9 +293,9 @@ The pipeline coordinates the following stages:
 
 The pipeline reuses previously saved successful raw responses where available, reducing unnecessary API requests during repeated executions.
 
-Eligible temporary API failures are handled through the configured retry mechanism. Requests returning HTTP 404 are recorded rather than treated as successful extractions.
+Eligible temporary API failures are handled through the configured retry mechanism. Unsuccessful requests are recorded in the extraction log.
 
-### 8.2 Re-running the pipeline
+### 8.2 Re-running the Pipeline
 
 To run the analysis again, execute:
 
@@ -300,7 +303,7 @@ To run the analysis again, execute:
 python run_pipeline.py
 ```
 
-The pipeline uses the existing project data and saved raw responses where available. It retrieves data where required and regenerates the analytical outputs.
+The pipeline uses existing project data and saved raw responses where available. It retrieves data where required and regenerates the analytical outputs.
 
 The extraction log and saved raw responses help maintain traceability between candidate identifiers and API retrieval outcomes.
 
@@ -315,6 +318,19 @@ python test_tmdb.py
 ```
 
 The script performs a four-film spot-check across the franchise and standalone categories and the two release periods.
+
+### Latest Verification Result
+
+The latest successful API consistency check produced the following results:
+
+| Measurement | Result |
+|---|---:|
+| Movies checked | 4 |
+| Fields checked | 32 |
+| Matching fields | 32 |
+| Different fields | 0 |
+
+**Result:** All checked fields matched the live TMDb responses.
 
 The results are saved to:
 
@@ -340,7 +356,7 @@ The main pipeline generates eight analytical CSV files in the `out/` directory. 
 | `runtime_summary.csv` | Processing time for the latest individual pipeline run |
 | `api_spot_check.csv` | Field-by-field results from the separate four-film API comparison |
 
-### Recommended review order
+### Recommended Review Order
 
 For an acquisition review, start with:
 
@@ -358,13 +374,14 @@ The detailed definitions and interpretation of the outputs are documented in `do
 
 ## 11. Key Findings
 
-### 11.1 Candidate data reconciliation
+### 11.1 Candidate Data Reconciliation
 
 The original candidate list contained 127 rows.
 
 | Reconciliation stage | Records |
 |---|---:|
 | Original candidate rows | 127 |
+| Missing identifier rows | 2 |
 | Non-missing identifiers | 125 |
 | Distinct non-missing identifiers | 119 |
 | Excess duplicate rows | 6 |
@@ -375,9 +392,13 @@ The original candidate list contained 127 rows.
 | Candidates with both responses | 112 |
 | Candidates without both responses | 5 |
 
-The five unresolved candidates returned HTTP 404 responses from both TMDb endpoints. This does not, by itself, establish that the identifiers are invalid.
+Five valid unique candidates did not have both movie-detail and credits responses successfully retrieved.
 
-### 11.2 Franchise versus standalone performance
+These incomplete records were excluded from the final complete analytical dataset. Their extraction outcomes should be reviewed in `candidate_accounting.csv` and `extraction_log.csv`.
+
+### 11.2 Franchise Versus Standalone Performance
+
+The analysis produced the following comparison:
 
 | Period | Film type | Count | Median revenue | Median gross-to-budget |
 |---|---|---:|---:|---:|
@@ -390,23 +411,23 @@ Franchise-classified films have higher median revenue and median gross-to-budget
 
 These are descriptive comparisons of the available candidate films. They do not establish that franchise status causes stronger performance.
 
-### 11.3 Leading franchise collections
+### 11.3 Leading Franchise Collections
 
-By median revenue:
+**By median revenue:**
 
-1. The Avengers Collection.
-2. The Dark Knight Collection.
-3. Pirates of the Caribbean Collection.
+1. The Avengers Collection — 4 films; median revenue of $1,785,615,277.
+2. The Dark Knight Collection — 3 films; median revenue of $1,008,480,529.
+3. Pirates of the Caribbean Collection — 5 films; median revenue of $961,691,209.
 
-By median gross-to-budget ratio, with a minimum of two represented films:
+**By median gross-to-budget ratio**, with a minimum of two represented films:
 
-1. Star Wars Collection.
-2. The Lord of the Rings Collection.
-3. Indiana Jones Collection.
+1. Star Wars Collection — 6 films; median ratio of 13.40x.
+2. The Lord of the Rings Collection — 3 films; median ratio of 11.73x.
+3. Indiana Jones Collection — 4 films; median ratio of 10.89x.
 
 The difference between the rankings demonstrates that the selected performance measure affects which collections appear most attractive.
 
-### 11.4 Standalone opportunities
+### 11.4 Standalone Opportunities
 
 The all-years standalone shortlist includes:
 
@@ -424,6 +445,8 @@ The 2000-onward shortlist includes:
 - Memento
 - The Departed
 
+These titles represent historical box-office screening opportunities, not confirmed licensing recommendations.
+
 ## 12. Additional Analysis: Ranking Sensitivity
 
 An additional franchise ranking sensitivity analysis compares two performance measures:
@@ -435,27 +458,41 @@ The alternative ratio ranking excludes collections represented by fewer than two
 
 Both rankings are retained so that their differences can be examined rather than relying on a single ranking measure.
 
+This is important because a collection with the highest total revenue does not necessarily have the highest revenue relative to its reported production budget.
+
 ## 13. Performance and Scalability
 
-The local pipeline was executed five times using saved raw responses.
+The latest successful pipeline execution processed 112 complete movie records.
 
 | Measurement | Result |
 |---|---:|
-| Movies processed per run | 112 |
-| Number of runs | 5 |
-| Average runtime | 0.327 seconds |
-| Median runtime | 0.321 seconds |
-| Projected runtime for 500 movies | Approximately 1.433 seconds |
+| Movies processed | 112 |
+| Latest measured local processing time | 4.764 seconds |
+| Projected processing time for 500 movies | 21.270 seconds |
+| Projected time in minutes | 0.354 minutes |
 
-The 500-movie runtime is a linear projection based on the current local processing workload. It excludes API extraction and network waiting. It is an estimate, not a measured 500-movie benchmark.
+The 500-movie figure is a linear projection based on the latest measured execution. It is an estimate rather than a measured 500-movie benchmark.
+
+The measurement represents local processing time and excludes API extraction and network waiting. Actual execution time may vary depending on the machine, data volume and API response conditions.
 
 ## 14. Data Quality and Limitations
 
 The project includes data-quality checks and validation, but the results must be interpreted within the limits of the available information.
 
+The latest successful pipeline execution reported:
+
+- 112 unique movie records.
+- No duplicate movie IDs in the analytical movie dataset.
+- No missing movie titles or release dates.
+- No missing or zero budgets.
+- No missing or zero revenues.
+- No unmatched cast records.
+- No unmatched director records.
+- All configured validation checks passed.
+
 Important limitations include:
 
-- Five candidate IDs returned HTTP 404 responses from both TMDb endpoints and remain unresolved.
+- Five valid unique candidates did not have both movie details and credits successfully retrieved.
 - TMDb collection membership is used as a proxy for franchise classification. It does not confirm commercial bundle availability.
 - Historical revenue and budget figures have not been independently verified or adjusted for inflation.
 - Gross-to-budget ratio is not profit. It excludes other costs, including marketing, distribution and licensing costs.
@@ -468,9 +505,11 @@ Consequently, the analysis can help prioritise opportunities but cannot independ
 
 ## 15. Acquisition Decision Guidance
 
-The current evidence supports prioritising franchise opportunities for further commercial investigation, beginning with The Avengers Collection under the median revenue measure.
+The current evidence supports prioritising franchise opportunities for further commercial investigation.
 
-The alternative ratio ranking should also inform the review, particularly for Star Wars, The Lord of the Rings and Indiana Jones.
+The Avengers Collection leads the franchise ranking by median revenue, while Star Wars, The Lord of the Rings and Indiana Jones lead the alternative gross-to-budget ratio ranking.
+
+Standalone films should also remain under consideration because some individual titles demonstrate strong historical gross-to-budget performance.
 
 Before approving an acquisition, StreamVault should obtain:
 
@@ -481,6 +520,8 @@ Before approving an acquisition, StreamVault should obtain:
 5. Finance's assessment of proposed fees against an agreed return threshold.
 
 The $14 million acquisition budget should not be committed solely on the basis of historical box-office performance.
+
+The final decision should combine the historical analysis with commercial availability, subscriber demand and financial due diligence.
 
 ## 16. Project Documentation
 
@@ -500,7 +541,9 @@ The Architecture Decision Records explain the reasoning behind major choices, in
 
 **Implemented:** Data extraction, raw response preservation, transformation, data-quality checks, validation, performance analysis, rankings, sensitivity analysis and output generation.
 
-**Completed checks:** Five-run local performance measurement and a four-film live TMDb API consistency check.
+**Verified:** The latest pipeline execution completed successfully, all configured validation checks passed, and the separate four-film live TMDb consistency check matched all 32 checked fields.
+
+**Generated deliverables:** Candidate accounting, data-quality results, performance summaries, franchise rankings, standalone rankings, movie talent information, runtime summary and API spot-check results.
 
 **Next decision stage:** Commercial and financial due diligence using verified licensing offers and internal audience-demand evidence.
 
