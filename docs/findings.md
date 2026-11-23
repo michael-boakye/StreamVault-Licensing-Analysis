@@ -2,15 +2,18 @@
 ## Data Diagnosis and Decision Assessment
 
 **Prepared for:** Kwame Boateng, VP Content Acquisition
+
 **Data source:** The Movie Database (TMDb) API
+
 **Data retrieved:** 23 November 2026
+
 **Scope:** 127 original candidate-list records
 
 ---
 
 ## 1. Executive Finding
 
-The initial analysis favours franchise films over standalone films on historical box-office performance. However, the candidate list contains data-quality problems, five unavailable movie records and financial measures that do not represent StreamVault's actual licensing returns.
+The initial analysis favours franchise films over standalone films on historical box-office performance. However, the candidate list contains data-quality problems, five candidates without both successful movie-details and credits responses, and financial measures that do not represent StreamVault's actual licensing returns.
 
 Across both analysis periods, franchise films have higher median revenue and median gross-to-budget ratios than standalone films. The direction of the comparison remains consistent when the analysis is restricted to films released from 2000 onward.
 
@@ -34,11 +37,11 @@ The original file contained 127 rows. These were not 127 distinct, usable TMDb m
 | Invalid distinct entries | 2 | `-1` and `tt0468569` |
 | Valid extraction candidates | 117 | Unique, positive numeric IDs |
 | Both movie details and credits successfully retrieved | 112 | Both API requests succeeded |
-| Not found | 5 | Both endpoints returned HTTP 404 |
+| Candidates without both successful responses | 5 | Complete movie details and credits were not both retrieved |
 
 The six excess duplicates were IDs 155, 680, 278, 603, 1891 and 550. The two invalid entries were `-1` and `tt0468569`. The latter resembles an IMDb identifier rather than a numeric TMDb movie ID.
 
-The five unavailable IDs were:
+The five candidate IDs that did not produce both successful responses were:
 
 - 8471293
 - 9412887
@@ -46,21 +49,21 @@ The five unavailable IDs were:
 - 9412888
 - 7733901
 
-All 112 successfully retrieved movie records also had successful credits responses. The five unavailable IDs returned HTTP 404 from both endpoints.
+All 112 successfully retrieved movie records also had successful credits responses. The five remaining candidates did not produce both successful movie-details and credits responses. Their individual extraction outcomes are recorded in `data/extraction_log.csv`.
 
 ### Why this matters
 
-Repeated IDs can cause a movie to be counted more than once, giving it extra influence in performance summaries. Invalid entries cannot be reliably matched to TMDb records. Missing and unavailable records create gaps in the candidate list.
+Repeated IDs can cause a movie to be counted more than once, giving it extra influence in performance summaries. Invalid entries cannot be reliably matched to TMDb records. Missing and unsuccessful retrievals create gaps in the candidate list.
 
-The extraction process retained all 117 valid-looking IDs in its log, including the five failures. This allows the team to distinguish records that were processed successfully from records that could not be retrieved.
+The extraction process retained all 117 valid-looking IDs in its log, including the five unsuccessful candidates. This allows the team to distinguish records that were processed successfully from records for which complete responses were not obtained.
 
-The retrieval success rate was 112 out of 117, approximately 95.7%. The remaining 5 records represent approximately 4.3% of the valid-looking extraction candidates.
+The retrieval success rate for complete records was 112 out of 117, approximately 95.7%. The remaining 5 records represent approximately 4.3% of the valid extraction candidates.
 
 ### Recommended response
 
-Keep the original candidate file unchanged as the source record. Retain the extraction log, investigate the five 404 responses against the original studio or internal source, and request corrected identifiers where necessary.
+Keep the original candidate file unchanged as the source record. Retain the extraction log, investigate the five unsuccessful candidates against the original studio or internal source, and request corrected identifiers where necessary.
 
-Do not silently delete unavailable records or describe them as confirmed non-existent films. A 404 response establishes that TMDb did not return the requested record; it does not establish why.
+Do not silently delete unsuccessful records or describe them as confirmed non-existent films. An unsuccessful API response does not establish why a requested record could not be retrieved.
 
 ## 3. Ranked Data Risks
 
@@ -82,17 +85,17 @@ The following ranking reflects the potential effect on the acquisition decision,
 
 **Quantification limitation:** The available data does not support a monetary estimate of potential licensing exposure. To quantify it, StreamVault would need comparable licensing quotes, contractual terms and expected audience value. The current measurable exposure is that the $14 million budget cannot be justified using the available evidence alone.
 
-### Risk 2: Five candidate records could not be retrieved
+### Risk 2: Five candidate records did not produce complete responses
 
 **Priority: High**
 
-**Evidence:** Five of 117 valid-looking IDs returned HTTP 404 responses from both TMDb endpoints. The retrieval success rate was 112/117, approximately 95.7%.
+**Evidence:** Five of 117 valid unique extraction candidates did not produce both successful movie-details and credits responses. The retrieval success rate for complete records was 112/117, approximately 95.7%.
 
-**Root cause:** The identifiers did not return movie records through the requested TMDb endpoints. The available evidence does not establish whether the IDs were incorrect, unavailable or otherwise unsuitable.
+**Root cause:** The five candidate IDs did not produce both required responses through the extraction process. The available evidence does not establish the exact reason for each unsuccessful retrieval.
 
-**Decision impact:** The five missing records cannot be included in the franchise comparison, standalone rankings or talent analysis. If they include commercially important titles, the shortlist may be incomplete.
+**Decision impact:** The five candidates cannot be included in the complete franchise comparison, standalone rankings or talent analysis. If they include commercially important titles, the shortlist may be incomplete.
 
-**Response:** Check the five identifiers against the original candidate sources and request corrections. Preserve the failure records in the extraction log.
+**Response:** Check the five identifiers against the original candidate sources and request corrections. Preserve the individual extraction outcomes in the extraction log.
 
 **Cost if ignored:** The acquisition shortlist could overlook relevant titles or misrepresent the coverage of the original candidate list.
 
@@ -217,7 +220,7 @@ These results should be used to prioritise further commercial investigation, not
 
 | Decision area | Option A | Option B | Main trade-off and consequence |
 |---|---|---|---|
-| Five unavailable IDs | Exclude from current analysis and disclose | Investigate and retrieve corrected records before final selection | Option A allows analysis to proceed but leaves five candidates unresolved. Option B takes longer but may recover missing candidates. |
+| Five candidates without complete responses | Exclude from current analysis and disclose | Investigate and retrieve corrected records before final selection | Option A allows analysis to proceed but leaves five candidates unresolved. Option B takes longer but may recover missing candidates. |
 | Franchise classification | Use TMDb collections as a labelled proxy | Verify commercial bundle membership with studios | Option A is reproducible but may not reflect actual offers. Option B is more commercially accurate but depends on studio confirmation. |
 | Historical financial data | Compare all years and 2000 onward separately | Restrict the main comparison to recent films | Option A retains more history but requires careful interpretation. Option B reduces some historical comparability concerns but excludes older candidate evidence. |
 | Acquisition ranking | Rank by box-office performance | Combine performance with licensing price and audience demand | Option A can identify promising historical performers but cannot establish acquisition value. Option B is more relevant to the actual decision but requires additional commercial and audience evidence. |
@@ -249,7 +252,7 @@ The available TMDb data does not establish:
 4. The contractual restrictions, exclusivity periods or geographic rights attached to each offer.
 5. StreamVault's expected viewing hours, subscriber acquisition or retention from these films.
 6. Whether the historical financial figures have been consistently reported across all periods.
-7. The reason each of the five unavailable IDs returned HTTP 404.
+7. The exact reasons why the five candidate IDs did not produce both successful API responses.
 
 These are evidence gaps, not values that should be estimated from box-office revenue alone.
 
@@ -257,7 +260,7 @@ These are evidence gaps, not values that should be estimated from box-office rev
 
 | Required evidence | Why it is needed | Suggested responsible party |
 |---|---|---|
-| Corrected details for five unavailable IDs | Establish whether missing candidates should be included | Content Acquisition team |
+| Corrected details for five candidates without complete responses | Establish whether missing candidates should be included | Content Acquisition team |
 | Studio bundle and standalone offers | Confirm what can actually be purchased | Content Acquisition team |
 | Licensing prices and contractual terms | Compare acquisition costs and rights | Content Acquisition with Legal |
 | Internal audience-demand evidence | Estimate likely viewing and subscriber value | Data/Analytics team |
@@ -287,42 +290,21 @@ This additional analysis makes the ranking comparison repeatable and shows how t
 
 ### 9.1 Runtime Measurement and 500-Movie Projection
 
-The local analysis pipeline was timed using Python's `time.perf_counter()`. Timing began after the TMDb extraction process completed, so API requests and network waiting were excluded.
-
-To obtain a more representative measurement, the pipeline was executed five times using the saved TMDb responses. Each run processed the 112 successfully retrieved movies.
-
-**Five-run timing results:**
+The latest successful pipeline execution processed 112 complete movie records.
 
 | Measurement | Result |
 |---|---:|
-| Movies processed per run | 112 |
-| Number of timing runs | 5 |
-| Fastest run | 0.314 seconds |
-| Slowest run | 0.349 seconds |
-| Average runtime | 0.327 seconds |
-| Median runtime | 0.321 seconds |
-
-The median runtime of 0.321 seconds was selected as the representative measurement because it is less affected by unusually fast or slow individual runs.
-
-A linear projection was used to estimate the processing time for 500 movies:
-
-\[
-0.321 \times \frac{500}{112} = 1.433 \text{ seconds}
-\]
-
-| Measure | Result |
-|---|---:|
 | Movies processed | 112 |
-| Representative measured runtime (median) | 0.321 seconds |
+| Latest measured local processing time | 4.764 seconds |
 | Target dataset size | 500 movies |
-| Projected processing time | Approximately 1.433 seconds |
-| Projected processing time in minutes | Approximately 0.024 minutes |
+| Projected processing time | 21.270 seconds |
+| Projected processing time in minutes | 0.354 minutes |
 
-The projection assumes approximately linear growth in local processing time as the dataset increases. It is an estimate, not a measured 500-movie benchmark. Actual performance may vary with hardware, data volume and processing requirements.
+The 500-movie figure is a linear projection based on the latest measured execution. It is an estimate rather than a measured 500-movie benchmark.
 
-API extraction time is excluded. Retrieving additional records from TMDb would require separate time and would depend on network conditions and API response limits.
+The measurement represents local processing time and excludes API extraction and network waiting. Actual execution time may vary depending on the machine, data volume and processing requirements.
 
-The individual runtime from each pipeline execution is saved in `out/runtime_summary.csv`. The five-run average and median were calculated separately from the repeated execution results.
+The latest execution measurement is recorded in `out/runtime_summary.csv`.
 
 ### 9.2 Reproducibility considerations
 
