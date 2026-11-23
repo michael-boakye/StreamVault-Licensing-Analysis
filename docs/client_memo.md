@@ -1,8 +1,11 @@
 ﻿# StreamVault Content Licensing Analysis
 
 **To:** Kwame Boateng, VP Content Acquisition
+
 **Subject:** Evidence-based assessment of franchise and standalone film opportunities
+
 **Date:** 23 November 2026
+
 **Data as of:** 23 November 2026
 
 ## Executive recommendation
@@ -26,7 +29,7 @@ The original candidate list contained 127 rows. Reconciliation produced the foll
 | Successfully retrieved credits records | 112 |
 | IDs with both responses | 112 |
 
-Five candidate IDs returned HTTP 404 responses from TMDb: `8471293`, `9412887`, `8471294`, `9412888` and `7733901`. These records remain unresolved; a 404 response does not establish that the corresponding films do not exist.
+Five valid unique candidate IDs did not produce both successful movie-details and credits responses. These records remain unresolved and were excluded from the complete analytical dataset. Their individual extraction outcomes are recorded in `data/extraction_log.csv`. An unsuccessful API response does not establish that a corresponding film does not exist.
 
 The retrieved dataset contained 96 franchise-classified films and 16 standalone films.
 
