@@ -272,7 +272,7 @@ The analysis pipeline checks the extraction log and saved raw JSON files, loads 
 
 Existing successful responses are reused, while missing eligible records can be retrieved through the TMDb API.
 
-The pipeline produces the candidate accounting, data-quality checks, performance summary, franchise rankings, alternative franchise rankings, standalone rankings, movie talent outputs and runtime summary.
+The pipeline produces candidate accounting, row-level candidate reconciliation, data-quality checks, performance summary, franchise rankings, alternative franchise rankings, standalone rankings, movie talent outputs and runtime summary.
 
 An additional franchise ranking sensitivity analysis was implemented to compare collections using two measures:
 
@@ -295,10 +295,10 @@ The latest successful pipeline execution processed 112 complete movie records.
 | Measurement | Result |
 |---|---:|
 | Movies processed | 112 |
-| Latest measured local processing time | 4.764 seconds |
+| Latest measured local processing time | 0.487 seconds |
 | Target dataset size | 500 movies |
-| Projected processing time | 21.270 seconds |
-| Projected processing time in minutes | 0.354 minutes |
+| Projected processing time | 2.175 seconds |
+| Projected processing time in minutes | 0.036 minutes |
 
 The 500-movie figure is a linear projection based on the latest measured execution. It is an estimate rather than a measured 500-movie benchmark.
 

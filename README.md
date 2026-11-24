@@ -1,4 +1,4 @@
-# StreamVault Content Licensing Analysis
+﻿# StreamVault Content Licensing Analysis
 
 **An evidence-based data engineering and analytics project for evaluating franchise and standalone film acquisition opportunities.**
 
@@ -80,46 +80,46 @@ The project aims to:
 
 ```text
 StreamVault-Licensing-Analysis/
-│
-├── data/
-│   ├── id_list.csv
-│   ├── extraction_log.csv
-│   └── raw/                       # Generated locally
-│       ├── movie_*.json
-│       └── credits_*.json
-│
-├── docs/
-│   ├── adr/
-│   │   ├── ADR-001-tmdb-raw-data.md
-│   │   ├── ADR-002-candidate-id-cleaning.md
-│   │   ├── ADR-003-separate-data-grains.md
-│   │   ├── ADR-004-franchise-classification.md
-│   │   └── ADR-005-performance-measurement.md
-│   ├── data_contract.md
-│   ├── findings.md
-│   ├── questions.md
-│   └── client_memo.md
-│
-├── explore_data/
-│   └── profile_data.ipynb
-│
-├── pipeline/
-│   ├── __init__.py
-│   ├── checks.py
-│   ├── config.py
-│   ├── extract.py
-│   ├── load.py
-│   ├── transform.py
-│   └── validate.py
-│
-├── out/                           # Generated locally
-│
-├── .env.example
-├── .gitignore
-├── requirements.txt
-├── run_pipeline.py
-├── test_tmdb.py
-└── README.md
+â”‚
+â”œâ”€â”€ data/
+â”‚   â”œâ”€â”€ id_list.csv
+â”‚   â”œâ”€â”€ extraction_log.csv
+â”‚   â””â”€â”€ raw/                       # Generated locally
+â”‚       â”œâ”€â”€ movie_*.json
+â”‚       â””â”€â”€ credits_*.json
+â”‚
+â”œâ”€â”€ docs/
+â”‚   â”œâ”€â”€ adr/
+â”‚   â”‚   â”œâ”€â”€ ADR-001-tmdb-raw-data.md
+â”‚   â”‚   â”œâ”€â”€ ADR-002-candidate-id-cleaning.md
+â”‚   â”‚   â”œâ”€â”€ ADR-003-separate-data-grains.md
+â”‚   â”‚   â”œâ”€â”€ ADR-004-franchise-classification.md
+â”‚   â”‚   â””â”€â”€ ADR-005-performance-measurement.md
+â”‚   â”œâ”€â”€ data_contract.md
+â”‚   â”œâ”€â”€ findings.md
+â”‚   â”œâ”€â”€ questions.md
+â”‚   â””â”€â”€ client_memo.md
+â”‚
+â”œâ”€â”€ explore_data/
+â”‚   â””â”€â”€ profile_data.ipynb
+â”‚
+â”œâ”€â”€ pipeline/
+â”‚   â”œâ”€â”€ __init__.py
+â”‚   â”œâ”€â”€ checks.py
+â”‚   â”œâ”€â”€ config.py
+â”‚   â”œâ”€â”€ extract.py
+â”‚   â”œâ”€â”€ load.py
+â”‚   â”œâ”€â”€ transform.py
+â”‚   â””â”€â”€ validate.py
+â”‚
+â”œâ”€â”€ out/                           # Generated locally
+â”‚
+â”œâ”€â”€ .env.example
+â”œâ”€â”€ .gitignore
+â”œâ”€â”€ requirements.txt
+â”œâ”€â”€ run_pipeline.py
+â”œâ”€â”€ test_tmdb.py
+â””â”€â”€ README.md
 ```
 
 ### Main Components
@@ -342,11 +342,12 @@ This check provides a limited comparison of selected records. It does not replac
 
 ## 10. Understanding the Generated Outputs
 
-The main pipeline generates eight analytical CSV files in the `out/` directory. The separate API spot-check generates an additional CSV file.
+The main pipeline generates nine analytical CSV files in the `out/` directory. The separate API spot-check generates an additional CSV file.
 
 | Output file | What it tells you |
 |---|---|
-| `candidate_accounting.csv` | How the original candidate list was reconciled and how many records were retrieved |
+| `candidate_accounting.csv` | Summary of the original candidate list and retrieval results |
+| `candidate_reconciliation.csv` | Row-level accounting of all 127 original candidate records |
 | `data_quality_checks.csv` | Results of the data-quality checks |
 | `performance_summary.csv` | Franchise versus standalone performance across both periods |
 | `franchise_rankings.csv` | Franchise collections ranked by median revenue |
@@ -360,15 +361,15 @@ The main pipeline generates eight analytical CSV files in the `out/` directory. 
 
 For an acquisition review, start with:
 
-1. `candidate_accounting.csv` — Understand how much of the original candidate list was usable.
-2. `data_quality_checks.csv` — Review the reliability of the retrieved data.
-3. `performance_summary.csv` — Compare franchise and standalone performance.
-4. `franchise_rankings.csv` — Review collections with the highest median revenue.
-5. `franchise_rankings_by_ratio.csv` — Examine the alternative ranking.
-6. `standalone_rankings.csv` — Review individual-film opportunities.
-7. `movie_talent.csv` — Inspect directors and leading actors.
-8. `runtime_summary.csv` — Inspect the latest pipeline execution time.
-9. `api_spot_check.csv` — Review the selected live API comparisons, if the separate check has been run.
+1. `candidate_accounting.csv` â€” Understand how much of the original candidate list was usable.
+2. `data_quality_checks.csv` â€” Review the reliability of the retrieved data.
+3. `performance_summary.csv` â€” Compare franchise and standalone performance.
+4. `franchise_rankings.csv` â€” Review collections with the highest median revenue.
+5. `franchise_rankings_by_ratio.csv` â€” Examine the alternative ranking.
+6. `standalone_rankings.csv` â€” Review individual-film opportunities.
+7. `movie_talent.csv` â€” Inspect directors and leading actors.
+8. `runtime_summary.csv` â€” Inspect the latest pipeline execution time.
+9. `api_spot_check.csv` â€” Review the selected live API comparisons, if the separate check has been run.
 
 The detailed definitions and interpretation of the outputs are documented in `docs/data_contract.md` and `docs/findings.md`.
 
@@ -415,15 +416,15 @@ These are descriptive comparisons of the available candidate films. They do not 
 
 **By median revenue:**
 
-1. The Avengers Collection — 4 films; median revenue of $1,785,615,277.
-2. The Dark Knight Collection — 3 films; median revenue of $1,008,480,529.
-3. Pirates of the Caribbean Collection — 5 films; median revenue of $961,691,209.
+1. The Avengers Collection â€” 4 films; median revenue of $1,785,615,277.
+2. The Dark Knight Collection â€” 3 films; median revenue of $1,008,480,529.
+3. Pirates of the Caribbean Collection â€” 5 films; median revenue of $961,691,209.
 
 **By median gross-to-budget ratio**, with a minimum of two represented films:
 
-1. Star Wars Collection — 6 films; median ratio of 13.40x.
-2. The Lord of the Rings Collection — 3 films; median ratio of 11.73x.
-3. Indiana Jones Collection — 4 films; median ratio of 10.89x.
+1. Star Wars Collection â€” 6 films; median ratio of 13.40x.
+2. The Lord of the Rings Collection â€” 3 films; median ratio of 11.73x.
+3. Indiana Jones Collection â€” 4 films; median ratio of 10.89x.
 
 The difference between the rankings demonstrates that the selected performance measure affects which collections appear most attractive.
 
@@ -467,9 +468,9 @@ The latest successful pipeline execution processed 112 complete movie records.
 | Measurement | Result |
 |---|---:|
 | Movies processed | 112 |
-| Latest measured local processing time | 4.764 seconds |
-| Projected processing time for 500 movies | 21.270 seconds |
-| Projected time in minutes | 0.354 minutes |
+| Latest measured local processing time | 0.487 seconds |
+| Projected processing time for 500 movies | 2.175 seconds |
+| Projected time in minutes | 0.036 minutes |
 
 The 500-movie figure is a linear projection based on the latest measured execution. It is an estimate rather than a measured 500-movie benchmark.
 

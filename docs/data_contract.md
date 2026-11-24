@@ -1,4 +1,4 @@
-# StreamVault Data Contract
+﻿# StreamVault Data Contract
 
 ## 1. Purpose
 
@@ -118,7 +118,8 @@ The pipeline writes its results to `out/`:
 
 | File | Contents |
 |---|---|
-| `candidate_accounting.csv` | Reconciliation of the original candidate list and extraction results |
+| `candidate_accounting.csv` | Summary of the original candidate list and extraction results |
+| `candidate_reconciliation.csv` | Row-level accounting of all original candidate records |
 | `data_quality_checks.csv` | Data quality check results |
 | `performance_summary.csv` | Franchise and standalone comparisons for both periods |
 | `franchise_rankings.csv` | Collection-level performance rankings by median revenue |
