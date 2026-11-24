@@ -1,27 +1,23 @@
-
-def validate_movie_data(movies, cast, directors):
+﻿def validate_movie_data(movies, cast, directors):
     """Validate movie IDs and relationships between the tables."""
 
-    # Movie IDs must be unique
-    assert movies["id"].is_unique, "Duplicate movie IDs found"
+    if not movies["id"].is_unique:
+        raise ValueError("Duplicate movie IDs found")
 
-    # Every cast record must match a movie
-    assert cast["tmdb_id"].isin(movies["id"]).all(), (
-        "Some cast records do not match a movie"
-    )
+    if not cast["tmdb_id"].isin(movies["id"]).all():
+        raise ValueError("Some cast records do not match a movie")
 
-    # Every director record must match a movie
-    assert directors["tmdb_id"].isin(movies["id"]).all(), (
-        "Some director records do not match a movie"
-    )
+    if not directors["tmdb_id"].isin(movies["id"]).all():
+        raise ValueError("Some director records do not match a movie")
 
-    # Confirm that all three tables cover the same movies
-    assert set(movies["id"]) == set(cast["tmdb_id"]), (
-        "Movie and cast records do not match"
-    )
+    movie_ids = set(movies["id"])
+    cast_ids = set(cast["tmdb_id"])
+    director_ids = set(directors["tmdb_id"])
 
-    assert set(movies["id"]) == set(directors["tmdb_id"]), (
-        "Movie and director records do not match"
-    )
+    if movie_ids != cast_ids:
+        raise ValueError("Movie and cast records do not match")
+
+    if movie_ids != director_ids:
+        raise ValueError("Movie and director records do not match")
 
     return "All validation checks passed."

@@ -1,4 +1,4 @@
-﻿# StreamVault Content Licensing Analysis
+# StreamVault Content Licensing Analysis
 
 **An evidence-based data engineering and analytics project for evaluating franchise and standalone film acquisition opportunities.**
 
@@ -80,46 +80,46 @@ The project aims to:
 
 ```text
 StreamVault-Licensing-Analysis/
-â”‚
-â”œâ”€â”€ data/
-â”‚   â”œâ”€â”€ id_list.csv
-â”‚   â”œâ”€â”€ extraction_log.csv
-â”‚   â””â”€â”€ raw/                       # Generated locally
-â”‚       â”œâ”€â”€ movie_*.json
-â”‚       â””â”€â”€ credits_*.json
-â”‚
-â”œâ”€â”€ docs/
-â”‚   â”œâ”€â”€ adr/
-â”‚   â”‚   â”œâ”€â”€ ADR-001-tmdb-raw-data.md
-â”‚   â”‚   â”œâ”€â”€ ADR-002-candidate-id-cleaning.md
-â”‚   â”‚   â”œâ”€â”€ ADR-003-separate-data-grains.md
-â”‚   â”‚   â”œâ”€â”€ ADR-004-franchise-classification.md
-â”‚   â”‚   â””â”€â”€ ADR-005-performance-measurement.md
-â”‚   â”œâ”€â”€ data_contract.md
-â”‚   â”œâ”€â”€ findings.md
-â”‚   â”œâ”€â”€ questions.md
-â”‚   â””â”€â”€ client_memo.md
-â”‚
-â”œâ”€â”€ explore_data/
-â”‚   â””â”€â”€ profile_data.ipynb
-â”‚
-â”œâ”€â”€ pipeline/
-â”‚   â”œâ”€â”€ __init__.py
-â”‚   â”œâ”€â”€ checks.py
-â”‚   â”œâ”€â”€ config.py
-â”‚   â”œâ”€â”€ extract.py
-â”‚   â”œâ”€â”€ load.py
-â”‚   â”œâ”€â”€ transform.py
-â”‚   â””â”€â”€ validate.py
-â”‚
-â”œâ”€â”€ out/                           # Generated locally
-â”‚
-â”œâ”€â”€ .env.example
-â”œâ”€â”€ .gitignore
-â”œâ”€â”€ requirements.txt
-â”œâ”€â”€ run_pipeline.py
-â”œâ”€â”€ test_tmdb.py
-â””â”€â”€ README.md
+|
+|-- data/
+|   |-- id_list.csv
+|   |-- extraction_log.csv
+|   |-- raw/                       # Generated locally
+|       |-- movie_*.json
+|       |-- credits_*.json
+|
+|-- docs/
+|   |-- adr/
+|   |   |-- ADR-001-tmdb-raw-data.md
+|   |   |-- ADR-002-candidate-id-cleaning.md
+|   |   |-- ADR-003-separate-data-grains.md
+|   |   |-- ADR-004-franchise-classification.md
+|   |   |-- ADR-005-performance-measurement.md
+|   |-- data_contract.md
+|   |-- findings.md
+|   |-- questions.md
+|   |-- client_memo.md
+|
+|-- explore_data/
+|   |-- profile_data.ipynb
+|
+|-- pipeline/
+|   |-- __init__.py
+|   |-- checks.py
+|   |-- config.py
+|   |-- extract.py
+|   |-- load.py
+|   |-- transform.py
+|   |-- validate.py
+|
+|-- out/                           # Generated locally
+|
+|-- .env.example
+|-- .gitignore
+|-- requirements.txt
+|-- run_pipeline.py
+|-- test_tmdb.py
+|-- README.md
 ```
 
 ### Main Components
@@ -361,15 +361,16 @@ The main pipeline generates nine analytical CSV files in the `out/` directory. T
 
 For an acquisition review, start with:
 
-1. `candidate_accounting.csv` â€” Understand how much of the original candidate list was usable.
-2. `data_quality_checks.csv` â€” Review the reliability of the retrieved data.
-3. `performance_summary.csv` â€” Compare franchise and standalone performance.
-4. `franchise_rankings.csv` â€” Review collections with the highest median revenue.
-5. `franchise_rankings_by_ratio.csv` â€” Examine the alternative ranking.
-6. `standalone_rankings.csv` â€” Review individual-film opportunities.
-7. `movie_talent.csv` â€” Inspect directors and leading actors.
-8. `runtime_summary.csv` â€” Inspect the latest pipeline execution time.
-9. `api_spot_check.csv` â€” Review the selected live API comparisons, if the separate check has been run.
+1. `candidate_accounting.csv` - Understand how the original candidate list was distributed across the extraction stages.
+2. `candidate_reconciliation.csv` - Trace every original candidate row, including missing, duplicate, invalid and incomplete records.
+3. `data_quality_checks.csv` - Review the configured checks on the retrieved analytical dataset.
+4. `performance_summary.csv` - Compare franchise and standalone performance across both periods.
+5. `franchise_rankings.csv` - Review collections ranked by median revenue.
+6. `franchise_rankings_by_ratio.csv` - Examine the alternative gross-to-budget ranking.
+7. `standalone_rankings.csv` - Review individual-film opportunities.
+8. `movie_talent.csv` - Inspect director and cast information.
+9. `runtime_summary.csv` - Inspect the latest local processing measurement.
+10. `api_spot_check.csv` - Review selected live API comparisons, if the separate check has been run.
 
 The detailed definitions and interpretation of the outputs are documented in `docs/data_contract.md` and `docs/findings.md`.
 
@@ -497,7 +498,7 @@ Important limitations include:
 - TMDb collection membership is used as a proxy for franchise classification. It does not confirm commercial bundle availability.
 - Historical revenue and budget figures have not been independently verified or adjusted for inflation.
 - Gross-to-budget ratio is not profit. It excludes other costs, including marketing, distribution and licensing costs.
-- Franchise and standalone groups are unequal in size.
+- Franchise and standalone groups are unequal in size. The comparisons are descriptive summaries of the available sample; they do not establish statistical significance, causation or expected future performance.
 - The candidate list may not represent the complete market of available films.
 - Internal subscriber demand, viewing behaviour, licensing prices and contractual terms were unavailable.
 - The live API consistency check covers four selected films, not the complete retrieved dataset.

@@ -246,13 +246,11 @@ movie_talent = movies.merge(
     indicator="_cast_merge"
 )
 
-assert len(movie_talent) == len(movies), (
-    "Actor merge unexpectedly changed the movie row count."
-)
+if len(movie_talent) != len(movies):
+    raise ValueError("Actor merge unexpectedly changed the movie row count.")
 
-assert movie_talent["_cast_merge"].eq("both").all(), (
-    "Some movies do not have matching cast summaries."
-)
+if not movie_talent["_cast_merge"].eq("both").all():
+    raise ValueError("Some movies do not have matching cast summaries.")
 
 movie_talent = movie_talent.drop(columns="_cast_merge")
 
@@ -267,13 +265,11 @@ movie_talent = movie_talent.merge(
     indicator="_director_merge"
 )
 
-assert len(movie_talent) == len(movies), (
-    "Director merge unexpectedly changed the movie row count."
-)
+if len(movie_talent) != len(movies):
+    raise ValueError("Director merge unexpectedly changed the movie row count.")
 
-assert movie_talent["_director_merge"].eq("both").all(), (
-    "Some movies do not have matching director summaries."
-)
+if not movie_talent["_director_merge"].eq("both").all():
+    raise ValueError("Some movies do not have matching director summaries.")
 
 movie_talent = movie_talent.drop(columns="_director_merge")
 
@@ -415,14 +411,13 @@ joined_candidates = valid_candidates.merge(
     indicator=True
 )
 
-assert len(joined_candidates) == len(valid_candidates), (
-    "Extraction reconciliation changed the candidate row count."
-)
+if len(joined_candidates) != len(valid_candidates):
+    raise ValueError("Extraction reconciliation changed the candidate row count.")
 
-assert len(joined_candidates) == 117, (
-    f"Expected 117 valid unique candidates; "
-    f"found {len(joined_candidates)}."
-)
+if len(joined_candidates) != 117:
+    raise ValueError(
+        f"Expected 117 valid unique candidates; found {len(joined_candidates)}."
+    )
 
 # Record extraction outcomes against the original source rows.
 for _, row in joined_candidates.iterrows():
@@ -485,9 +480,8 @@ candidate_movie_join = valid_candidates.merge(
     indicator=True
 )
 
-assert len(candidate_movie_join) == 117, (
-    "Candidate-to-movie reconciliation changed the row count."
-)
+if len(candidate_movie_join) != 117:
+    raise ValueError("Candidate-to-movie reconciliation changed the row count.")
 
 matched_movies = (
     candidate_movie_join["_merge"] == "both"
@@ -497,13 +491,11 @@ unmatched_movies = (
     candidate_movie_join["_merge"] == "left_only"
 ).sum()
 
-assert matched_movies == 112, (
-    f"Expected 112 matched movies; found {matched_movies}."
-)
+if matched_movies != 112:
+    raise ValueError(f"Expected 112 matched movies; found {matched_movies}.")
 
-assert unmatched_movies == 5, (
-    f"Expected 5 unmatched movies; found {unmatched_movies}."
-)
+if unmatched_movies != 5:
+    raise ValueError(f"Expected 5 unmatched movies; found {unmatched_movies}.")
 
 # Store the movie-table reconciliation result.
 movie_status_by_row = candidate_movie_join.set_index(
@@ -529,13 +521,11 @@ reconciliation.loc[
 ] = "not_found"
 
 # Final assertion: every original row must have a classification.
-assert len(reconciliation) == len(candidate_ids), (
-    "Not every original candidate row was retained."
-)
+if len(reconciliation) != len(candidate_ids):
+    raise ValueError("Not every original candidate row was retained.")
 
-assert reconciliation["reconciliation_status"].ne("pending").all(), (
-    "Some original candidate rows remain unclassified."
-)
+if not reconciliation["reconciliation_status"].ne("pending").all():
+    raise ValueError("Some original candidate rows remain unclassified.")
 
 reconciliation.to_csv(
     OUTPUT_DIR / "candidate_reconciliation.csv",
