@@ -290,17 +290,17 @@ This additional analysis makes the ranking comparison repeatable and shows how t
 
 ### 9.1 Runtime Measurement and 500-Movie Projection
 
-The latest successful pipeline execution processed 112 complete movie records.
+Two successful pipeline executions each processed 112 complete movie records.
 
 | Measurement | Result |
 |---|---:|
 | Movies processed | 112 |
-| Latest measured local processing time | 0.487 seconds |
+| Observed local processing time across two runs | 0.487-3.242 seconds |
 | Target dataset size | 500 movies |
-| Projected processing time | 2.175 seconds |
-| Projected processing time in minutes | 0.036 minutes |
+| Projected processing time | 2.175-14.474 seconds |
+| Projected processing time in minutes | 0.036-0.241 minutes |
 
-The 500-movie figure is a linear projection based on the latest measured execution. It is an estimate rather than a measured 500-movie benchmark.
+The range reflects two successful runs: 0.487 and 3.242 seconds for 112 movies, producing linear 500-movie estimates of 2.175 and 14.474 seconds. These are estimates, not a measured 500-movie benchmark.
 
 The measurement represents local processing time and excludes API extraction and network waiting. Actual execution time may vary depending on the machine, data volume and processing requirements.
 

@@ -463,16 +463,16 @@ This is important because a collection with the highest total revenue does not n
 
 ## 13. Performance and Scalability
 
-The latest successful pipeline execution processed 112 complete movie records.
+Two successful pipeline executions each processed 112 complete movie records.
 
 | Measurement | Result |
 |---|---:|
 | Movies processed | 112 |
-| Latest measured local processing time | 0.487 seconds |
-| Projected processing time for 500 movies | 2.175 seconds |
-| Projected time in minutes | 0.036 minutes |
+| Observed local processing time across two runs | 0.487-3.242 seconds |
+| Estimated time for 500 movies (linear projection) | 2.175-14.474 seconds |
+| Estimated time in minutes | 0.036-0.241 minutes |
 
-The 500-movie figure is a linear projection based on the latest measured execution. It is an estimate rather than a measured 500-movie benchmark.
+The range reflects two successful runs: 0.487 and 3.242 seconds for 112 movies, producing linear 500-movie estimates of 2.175 and 14.474 seconds. These are estimates, not a measured 500-movie benchmark.
 
 The measurement represents local processing time and excludes API extraction and network waiting. Actual execution time may vary depending on the machine, data volume and API response conditions.
 
