@@ -1,3 +1,4 @@
+
 import time
 import pandas as pd
 
@@ -13,7 +14,7 @@ from pipeline.extract import extract_tmdb_data
 
 
 # ---------------------------------------------------------
-# HELPER FUNCTIONS FOR THE HUMAN-READABLE SUMMARY
+# HELPER FUNCTIONS
 # ---------------------------------------------------------
 
 def format_money(value):
@@ -45,6 +46,7 @@ def print_film_ranking(data, heading, limit=5):
 
     display["revenue"] = display["revenue"].apply(format_money)
     display["budget"] = display["budget"].apply(format_money)
+
     display["gross_to_budget"] = (
         display["gross_to_budget"].apply(format_ratio)
     )
@@ -65,22 +67,24 @@ def print_film_ranking(data, heading, limit=5):
 
 
 # ---------------------------------------------------------
-# 1. EXTRACT MISSING DATA
+# 1. EXTRACT DATA AND START LOCAL PROCESSING TIMER
 # ---------------------------------------------------------
 
 print("Checking TMDb data...")
 
 extraction_log = extract_tmdb_data()
 
-# Start measuring local processing time.
-# API extraction time is excluded.
+# API extraction and network waiting are excluded
+# from the local processing measurement.
 
 start_time = time.perf_counter()
 
+# Preserve literal N/A values for explicit identification.
 candidate_ids = pd.read_csv(
     ID_LIST_PATH,
     dtype={"tmdb_id": "string"},
-    skip_blank_lines=False
+    skip_blank_lines=False,
+    keep_default_na=False
 )
 
 print("\nLoading saved TMDb data...")
@@ -90,7 +94,7 @@ cast, directors = load_credits_data()
 
 
 # ---------------------------------------------------------
-# 2. TRANSFORM THE MOVIE DATA
+# 2. TRANSFORM MOVIE DATA
 # ---------------------------------------------------------
 
 print("Preparing movie data...")
@@ -99,7 +103,7 @@ movies = transform_movies(movies)
 
 
 # ---------------------------------------------------------
-# 3. RUN DATA QUALITY CHECKS
+# 3. DATA QUALITY CHECKS
 # ---------------------------------------------------------
 
 print("\nDATA QUALITY CHECKS")
@@ -116,7 +120,7 @@ pd.Series(quality_results).to_csv(
 
 
 # ---------------------------------------------------------
-# 4. VALIDATE RELATIONSHIPS BETWEEN TABLES
+# 4. VALIDATE MOVIE, CAST AND DIRECTOR RELATIONSHIPS
 # ---------------------------------------------------------
 
 print("\nVALIDATION")
@@ -129,7 +133,7 @@ print(validation_result)
 
 
 # ---------------------------------------------------------
-# 5. COMPARE FRANCHISE AND STANDALONE PERFORMANCE
+# 5. FRANCHISE AND STANDALONE PERFORMANCE
 # ---------------------------------------------------------
 
 print("\nPERFORMANCE COMPARISON")
@@ -170,12 +174,17 @@ franchise_summary.to_csv(
 )
 
 
-# Alternative ranking using median gross-to-budget ratio.
-# Require at least two represented films per collection.
+# Alternative ranking by gross-to-budget ratio.
+# At least two films must be represented per collection.
 
 franchise_ratio_summary = (
-    franchise_summary[franchise_summary["movie_count"] >= 2]
-    .sort_values("median_gross_to_budget", ascending=False)
+    franchise_summary[
+        franchise_summary["movie_count"] >= 2
+    ]
+    .sort_values(
+        "median_gross_to_budget",
+        ascending=False
+    )
 )
 
 franchise_ratio_summary.to_csv(
@@ -191,8 +200,12 @@ franchise_ratio_summary.to_csv(
 standalone_summary = (
     movies[~movies["is_franchise"]]
     [[
-        "id", "title", "release_year",
-        "revenue", "budget", "gross_to_budget"
+        "id",
+        "title",
+        "release_year",
+        "revenue",
+        "budget",
+        "gross_to_budget"
     ]]
     .sort_values(
         ["gross_to_budget", "revenue"],
@@ -207,7 +220,7 @@ standalone_summary.to_csv(
 
 
 # ---------------------------------------------------------
-# 8. PREPARE DIRECTOR AND ACTOR INFORMATION
+# 8. PREPARE AND VALIDATE TALENT TABLE
 # ---------------------------------------------------------
 
 cast_summary = (
@@ -223,24 +236,46 @@ director_summary = (
     .reset_index()
 )
 
-movie_talent = (
-    movies
-    .merge(
-        cast_summary,
-        left_on="id",
-        right_on="tmdb_id",
-        how="left",
-        validate="one_to_one"
-    )
-    .merge(
-        director_summary,
-        left_on="id",
-        right_on="tmdb_id",
-        how="left",
-        validate="one_to_one",
-        suffixes=("", "_director")
-    )
+# Validate actor relationship.
+movie_talent = movies.merge(
+    cast_summary,
+    left_on="id",
+    right_on="tmdb_id",
+    how="left",
+    validate="one_to_one",
+    indicator="_cast_merge"
 )
+
+assert len(movie_talent) == len(movies), (
+    "Actor merge unexpectedly changed the movie row count."
+)
+
+assert movie_talent["_cast_merge"].eq("both").all(), (
+    "Some movies do not have matching cast summaries."
+)
+
+movie_talent = movie_talent.drop(columns="_cast_merge")
+
+# Validate director relationship.
+movie_talent = movie_talent.merge(
+    director_summary,
+    left_on="id",
+    right_on="tmdb_id",
+    how="left",
+    validate="one_to_one",
+    suffixes=("", "_director"),
+    indicator="_director_merge"
+)
+
+assert len(movie_talent) == len(movies), (
+    "Director merge unexpectedly changed the movie row count."
+)
+
+assert movie_talent["_director_merge"].eq("both").all(), (
+    "Some movies do not have matching director summaries."
+)
+
+movie_talent = movie_talent.drop(columns="_director_merge")
 
 movie_talent.to_csv(
     OUTPUT_DIR / "movie_talent.csv",
@@ -249,29 +284,281 @@ movie_talent.to_csv(
 
 
 # ---------------------------------------------------------
-# 9. ACCOUNT FOR EVERY ORIGINAL CANDIDATE ROW
+# 9. DETAILED CANDIDATE RECONCILIATION
 # ---------------------------------------------------------
 
-missing_id_rows = candidate_ids["tmdb_id"].isna().sum()
+print("\nRECONCILING ORIGINAL CANDIDATE RECORDS")
 
-non_missing_ids = candidate_ids["tmdb_id"].dropna()
+# Preserve every original row and its source position.
+reconciliation = candidate_ids.copy().reset_index(drop=True)
 
-distinct_ids = non_missing_ids.drop_duplicates()
+reconciliation.insert(
+    0,
+    "source_row",
+    range(2, len(reconciliation) + 2)
+)
 
-duplicate_rows = len(non_missing_ids) - len(distinct_ids)
+reconciliation["raw_tmdb_id"] = (
+    reconciliation["tmdb_id"]
+    .astype("string")
+    .str.strip()
+)
 
+reconciliation["normalized_tmdb_id"] = (
+    reconciliation["raw_tmdb_id"].copy()
+)
+
+# Identify blank and disguised missing values.
+missing_mask = (
+    reconciliation["normalized_tmdb_id"].isna()
+    | reconciliation["normalized_tmdb_id"].str.upper().isin(
+        ["", "N/A"]
+    )
+)
+
+reconciliation.loc[
+    missing_mask,
+    "normalized_tmdb_id"
+] = pd.NA
+
+reconciliation["reconciliation_status"] = "pending"
+reconciliation["exit_stage"] = "pending"
+reconciliation["movie_status"] = pd.NA
+reconciliation["credits_status"] = pd.NA
+reconciliation["movie_table_status"] = pd.NA
+
+# Missing and disguised missing identifiers.
+reconciliation.loc[
+    missing_mask,
+    "reconciliation_status"
+] = "missing_or_disguised_null"
+
+reconciliation.loc[
+    missing_mask,
+    "exit_stage"
+] = "pre_extraction"
+
+# Identify duplicate identifiers.
+duplicate_mask = (
+    reconciliation["normalized_tmdb_id"].notna()
+    & reconciliation["normalized_tmdb_id"].duplicated(
+        keep="first"
+    )
+)
+
+reconciliation.loc[
+    duplicate_mask,
+    "reconciliation_status"
+] = "duplicate"
+
+reconciliation.loc[
+    duplicate_mask,
+    "exit_stage"
+] = "pre_extraction"
+
+# Check whether remaining identifiers are valid positive integers.
 numeric_ids = pd.to_numeric(
-    distinct_ids,
+    reconciliation["normalized_tmdb_id"],
     errors="coerce"
 )
 
-valid_numeric_ids = (
-    numeric_ids.notna()
+valid_mask = (
+    reconciliation["normalized_tmdb_id"].notna()
+    & ~duplicate_mask
+    & numeric_ids.notna()
     & numeric_ids.gt(0)
     & numeric_ids.mod(1).eq(0)
 )
 
-invalid_distinct_ids = (~valid_numeric_ids).sum()
+invalid_mask = (
+    reconciliation["normalized_tmdb_id"].notna()
+    & ~duplicate_mask
+    & ~valid_mask
+)
+
+reconciliation.loc[
+    invalid_mask,
+    "reconciliation_status"
+] = "invalid_identifier"
+
+reconciliation.loc[
+    invalid_mask,
+    "exit_stage"
+] = "pre_extraction"
+
+# Prepare valid unique candidates for reconciliation.
+valid_candidates = reconciliation.loc[
+    valid_mask,
+    ["source_row", "normalized_tmdb_id"]
+].copy()
+
+valid_candidates["normalized_tmdb_id"] = (
+    valid_candidates["normalized_tmdb_id"].astype("string")
+)
+
+# Prepare the extraction log.
+log_for_join = extraction_log.copy()
+
+log_for_join["tmdb_id"] = (
+    log_for_join["tmdb_id"].astype("string")
+)
+
+# Match candidates against extraction outcomes.
+joined_candidates = valid_candidates.merge(
+    log_for_join[
+        ["tmdb_id", "movie_status", "credits_status"]
+    ],
+    left_on="normalized_tmdb_id",
+    right_on="tmdb_id",
+    how="left",
+    validate="one_to_one",
+    indicator=True
+)
+
+assert len(joined_candidates) == len(valid_candidates), (
+    "Extraction reconciliation changed the candidate row count."
+)
+
+assert len(joined_candidates) == 117, (
+    f"Expected 117 valid unique candidates; "
+    f"found {len(joined_candidates)}."
+)
+
+# Record extraction outcomes against the original source rows.
+for _, row in joined_candidates.iterrows():
+
+    idx = reconciliation.index[
+        reconciliation["source_row"] == row["source_row"]
+    ][0]
+
+    reconciliation.at[idx, "movie_status"] = row["movie_status"]
+    reconciliation.at[idx, "credits_status"] = row["credits_status"]
+
+    if row["_merge"] == "left_only":
+
+        reconciliation.at[
+            idx, "reconciliation_status"
+        ] = "missing_from_extraction_log"
+
+        reconciliation.at[
+            idx, "exit_stage"
+        ] = "extraction"
+
+    elif (
+        row["movie_status"] == "success"
+        and row["credits_status"] == "success"
+    ):
+
+        reconciliation.at[
+            idx, "reconciliation_status"
+        ] = "retrieved"
+
+        reconciliation.at[
+            idx, "exit_stage"
+        ] = "complete"
+
+    else:
+
+        reconciliation.at[
+            idx, "reconciliation_status"
+        ] = "incomplete_api_retrieval"
+
+        reconciliation.at[
+            idx, "exit_stage"
+        ] = "extraction"
+
+
+# ---------------------------------------------------------
+# 10. VALIDATE CANDIDATES AGAINST THE MOVIE TABLE
+# ---------------------------------------------------------
+
+movie_lookup = movies[["id"]].copy()
+
+movie_lookup["id"] = movie_lookup["id"].astype("string")
+
+candidate_movie_join = valid_candidates.merge(
+    movie_lookup,
+    left_on="normalized_tmdb_id",
+    right_on="id",
+    how="left",
+    validate="one_to_one",
+    indicator=True
+)
+
+assert len(candidate_movie_join) == 117, (
+    "Candidate-to-movie reconciliation changed the row count."
+)
+
+matched_movies = (
+    candidate_movie_join["_merge"] == "both"
+).sum()
+
+unmatched_movies = (
+    candidate_movie_join["_merge"] == "left_only"
+).sum()
+
+assert matched_movies == 112, (
+    f"Expected 112 matched movies; found {matched_movies}."
+)
+
+assert unmatched_movies == 5, (
+    f"Expected 5 unmatched movies; found {unmatched_movies}."
+)
+
+# Store the movie-table reconciliation result.
+movie_status_by_row = candidate_movie_join.set_index(
+    "source_row"
+)["_merge"]
+
+# Convert the mapped categorical values to string before
+# assigning new labels. This prevents pandas Categorical errors.
+reconciliation["movie_table_status"] = (
+    reconciliation["source_row"]
+    .map(movie_status_by_row)
+    .astype("string")
+)
+
+reconciliation.loc[
+    reconciliation["movie_table_status"] == "both",
+    "movie_table_status"
+] = "matched"
+
+reconciliation.loc[
+    reconciliation["movie_table_status"] == "left_only",
+    "movie_table_status"
+] = "not_found"
+
+# Final assertion: every original row must have a classification.
+assert len(reconciliation) == len(candidate_ids), (
+    "Not every original candidate row was retained."
+)
+
+assert reconciliation["reconciliation_status"].ne("pending").all(), (
+    "Some original candidate rows remain unclassified."
+)
+
+reconciliation.to_csv(
+    OUTPUT_DIR / "candidate_reconciliation.csv",
+    index=False
+)
+
+
+# ---------------------------------------------------------
+# 11. AGGREGATE CANDIDATE ACCOUNTING
+# ---------------------------------------------------------
+
+missing_id_rows = int(missing_mask.sum())
+
+non_missing_ids = reconciliation.loc[
+    ~missing_mask,
+    "normalized_tmdb_id"
+]
+
+distinct_ids = non_missing_ids.drop_duplicates()
+
+duplicate_rows = int(duplicate_mask.sum())
+
+invalid_distinct_ids = int(invalid_mask.sum())
 
 movie_successes = (
     extraction_log["movie_status"] == "success"
@@ -282,8 +569,12 @@ credits_successes = (
 ).sum()
 
 both_successes = (
-    (extraction_log["movie_status"] == "success")
-    & (extraction_log["credits_status"] == "success")
+    (
+        extraction_log["movie_status"] == "success"
+    )
+    & (
+        extraction_log["credits_status"] == "success"
+    )
 ).sum()
 
 unsuccessful_candidates = len(extraction_log) - both_successes
@@ -300,7 +591,9 @@ accounting = pd.DataFrame({
         "Movie details retrieved successfully",
         "Credits retrieved successfully",
         "Candidates with both responses",
-        "Candidates without both responses"
+        "Candidates without both responses",
+        "Candidates matched to movie table",
+        "Candidates unmatched to movie table"
     ],
     "count": [
         len(candidate_ids),
@@ -313,7 +606,9 @@ accounting = pd.DataFrame({
         movie_successes,
         credits_successes,
         both_successes,
-        unsuccessful_candidates
+        unsuccessful_candidates,
+        matched_movies,
+        unmatched_movies
     ]
 })
 
@@ -325,14 +620,35 @@ accounting.to_csv(
 print("\nCANDIDATE ACCOUNTING")
 print(accounting.to_string(index=False))
 
+print("\nDETAILED RECONCILIATION")
+print(
+    reconciliation["reconciliation_status"]
+    .value_counts()
+    .to_string()
+)
+
+print(
+    f"\nOriginal rows accounted for: "
+    f"{len(reconciliation)} / {len(candidate_ids)}"
+)
+
+print(
+    f"Candidates matched to movie table: {matched_movies}"
+)
+
+print(
+    f"Candidates unmatched to movie table: {unmatched_movies}"
+)
+
 
 # ---------------------------------------------------------
-# 10. MEASURE LOCAL PROCESSING TIME
+# 12. MEASURE LOCAL PROCESSING TIME
 # ---------------------------------------------------------
 
 elapsed_seconds = time.perf_counter() - start_time
 
 processed_movies = len(movies)
+
 target_movies = 500
 
 projected_seconds = (
@@ -364,14 +680,27 @@ runtime_summary.to_csv(
 )
 
 print("\nRUNTIME MEASUREMENT")
+
 print(f"Movies processed: {processed_movies}")
-print(f"Measured local processing time: {elapsed_seconds:.3f} seconds")
-print(f"Projected time for 500 movies: {projected_seconds:.3f} seconds")
-print(f"Projected time in minutes: {projected_seconds / 60:.3f}")
+
+print(
+    f"Measured local processing time: "
+    f"{elapsed_seconds:.3f} seconds"
+)
+
+print(
+    f"Projected time for 500 movies: "
+    f"{projected_seconds:.3f} seconds"
+)
+
+print(
+    f"Projected time in minutes: "
+    f"{projected_seconds / 60:.3f}"
+)
 
 
 # ---------------------------------------------------------
-# 11. HUMAN-READABLE PIPELINE RUN SUMMARY
+# 13. HUMAN-READABLE PIPELINE RUN SUMMARY
 # ---------------------------------------------------------
 
 print("\n")
@@ -382,7 +711,9 @@ print("=" * 65)
 
 # A. Candidate reconciliation
 
-accounting_values = accounting.set_index("measure")["count"].to_dict()
+accounting_values = (
+    accounting.set_index("measure")["count"].to_dict()
+)
 
 print("\n1. CANDIDATE DATA")
 
@@ -439,7 +770,10 @@ issues_found = [
 ]
 
 if not issues_found:
-    print("Data-quality checks: No issues detected by the configured checks.")
+    print(
+        "Data-quality checks: "
+        "No issues detected by the configured checks."
+    )
 else:
     print("Data-quality checks: Issues require review.")
 
@@ -447,6 +781,11 @@ else:
         print(f"  - {issue}: {quality_results[issue]}")
 
 print(f"Relationship validation: {validation_result}")
+
+print(
+    f"Candidate-to-movie join: "
+    f"{matched_movies} matched, {unmatched_movies} unmatched."
+)
 
 
 # C. Performance comparison
@@ -478,14 +817,16 @@ for period in ["All years", "2000 onward"]:
 
     print(
         f"  Franchise: {int(franchise_row['movie_count'])} films | "
-        f"Median revenue: {format_money(franchise_row['median_revenue'])} | "
+        f"Median revenue: "
+        f"{format_money(franchise_row['median_revenue'])} | "
         f"Median gross/budget: "
         f"{format_ratio(franchise_row['median_gross_to_budget'])}"
     )
 
     print(
         f"  Standalone: {int(standalone_row['movie_count'])} films | "
-        f"Median revenue: {format_money(standalone_row['median_revenue'])} | "
+        f"Median revenue: "
+        f"{format_money(standalone_row['median_revenue'])} | "
         f"Median gross/budget: "
         f"{format_ratio(standalone_row['median_gross_to_budget'])}"
     )
@@ -494,14 +835,25 @@ for period in ["All years", "2000 onward"]:
         franchise_row["median_revenue"]
         > standalone_row["median_revenue"]
     ):
-        print("  Interpretation: Franchise films have the higher median revenue.")
+        print(
+            "  Interpretation: Franchise films have "
+            "the higher median revenue."
+        )
+
     elif (
         franchise_row["median_revenue"]
         < standalone_row["median_revenue"]
     ):
-        print("  Interpretation: Standalone films have the higher median revenue.")
+        print(
+            "  Interpretation: Standalone films have "
+            "the higher median revenue."
+        )
+
     else:
-        print("  Interpretation: Both categories have equal median revenue.")
+        print(
+            "  Interpretation: Both categories have "
+            "equal median revenue."
+        )
 
 
 # D. Leading franchise opportunities
@@ -514,6 +866,7 @@ if franchise_summary.empty:
     print("No franchise collections available.")
 else:
     for _, row in franchise_summary.head(3).iterrows():
+
         print(
             f"  {row['collection_name']} | "
             f"{int(row['movie_count'])} films | "
@@ -527,6 +880,7 @@ if franchise_ratio_summary.empty:
     print("No eligible collections available.")
 else:
     for _, row in franchise_ratio_summary.head(3).iterrows():
+
         print(
             f"  {row['collection_name']} | "
             f"{int(row['movie_count'])} films | "
@@ -559,28 +913,36 @@ print_film_ranking(
 )
 
 
-# F. Warnings and interpretation
+# F. Interpretation notes
 
 print("\n6. IMPORTANT INTERPRETATION NOTES")
 
 if unsuccessful_candidates > 0:
+
     print(
         f"- {unsuccessful_candidates} candidates did not have both "
-        "movie details and credits retrieved. Review candidate_accounting.csv "
-        "and extraction_log.csv."
+        "movie details and credits retrieved. Review "
+        "candidate_reconciliation.csv and extraction_log.csv."
     )
-else:
-    print("- All extraction candidates have both movie details and credits.")
 
-if missing_id_rows > 0 or duplicate_rows > 0 or invalid_distinct_ids > 0:
+else:
+    print("- All extraction candidates have both responses.")
+
+if (
+    missing_id_rows > 0
+    or duplicate_rows > 0
+    or invalid_distinct_ids > 0
+):
+
     print(
-        "- The original candidate list contained missing, duplicate or "
-        "invalid identifiers. Review candidate_accounting.csv."
+        "- The original candidate list contained missing, "
+        "duplicate or invalid identifiers. Review "
+        "candidate_reconciliation.csv."
     )
 
 print(
-    "- TMDb collection membership is a proxy for franchise classification, "
-    "not proof of commercial bundle availability."
+    "- TMDb collection membership is a proxy for franchise "
+    "classification, not proof of commercial bundle availability."
 )
 
 print(
@@ -589,13 +951,13 @@ print(
 )
 
 print(
-    "- Historical box-office performance does not establish future "
-    "subscriber demand."
+    "- Historical box-office performance does not establish "
+    "future subscriber demand."
 )
 
 print(
-    "- The 500-film runtime is a local processing estimate and excludes "
-    "API extraction and network waiting."
+    "- The 500-film runtime is a local processing estimate "
+    "and excludes API extraction and network waiting."
 )
 
 
@@ -605,6 +967,7 @@ print("\n7. GENERATED PIPELINE OUTPUTS")
 
 pipeline_outputs = [
     "candidate_accounting.csv",
+    "candidate_reconciliation.csv",
     "data_quality_checks.csv",
     "performance_summary.csv",
     "franchise_rankings.csv",
